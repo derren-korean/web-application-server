@@ -1,13 +1,14 @@
 package webserver;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import util.HttpRequestUtils;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -25,12 +26,36 @@ public class RequestHandler extends Thread {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
             DataOutputStream dos = new DataOutputStream(out);
-            byte[] body = "3.3.2.6 ㅅㅗ스코드 재배포".getBytes();
+            BufferedReader requestBuffer = new BufferedReader(new InputStreamReader(in));
+            FileInputStream fileInputStream = new FileInputStream(filePath(requestLine(requestBuffer)));
+            byte[] body = bufferToString(new BufferedReader(new InputStreamReader(fileInputStream))).getBytes();
             response200Header(dos, body.length);
             responseBody(dos, body);
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+    }
+
+    private String filePath(String requestLine) {
+        String _temp = requestLine.split(" ")[1];
+        String _path = _temp.equals("/") ? "/index.html" : _temp;
+        return "webapp"+_path;
+    }
+
+    private String requestLine(BufferedReader requestBuffer) {
+        return requestBuffer.lines().filter(line -> line.contains("HTTP")).findFirst().orElseThrow(IllegalArgumentException::new);
+    }
+
+    private String bufferToString(BufferedReader requestBuffer) {
+        String _temp = "";
+            List<String> lines = requestBuffer
+                    .lines()
+                    .collect(Collectors.toList());
+
+            for (String line : lines) {
+                _temp += line;
+            }
+        return _temp;
     }
 
     private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {

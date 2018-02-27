@@ -15,7 +15,9 @@
 * 각 요구사항을 구현하는 것이 중요한 것이 아니라 구현 과정을 통해 학습한 내용을 인식하는 것이 배움에 중요하다. 
 
 ### 요구사항 1 - http://localhost:8080/index.html로 접속시 응답
-* 
+* HTTP의 request의 정보를 가져옵니다. [HTTP 스팩 문서](https://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html)
+* request-line의 파일 경로를 이용하여 파일을 읽어옵니다.
+* 해당 파일을 byte로 변환하여 client로 반환합니다.
 
 ### 요구사항 2 - get 방식으로 회원가입
 * 
