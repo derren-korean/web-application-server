@@ -2,13 +2,18 @@ package webserver;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Arrays;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import util.HttpRequestUtils;
+import util.RequestLineUtil;
+import util.UserHandler;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -22,13 +27,9 @@ public class RequestHandler extends Thread {
     public void run() {
         log.debug("New Client Connect! Connected IP : {}, Port : {}", connection.getInetAddress(),
                 connection.getPort());
-
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-            // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
             DataOutputStream dos = new DataOutputStream(out);
-            BufferedReader requestBuffer = new BufferedReader(new InputStreamReader(in));
-            FileInputStream fileInputStream = new FileInputStream(filePath(requestLine(requestBuffer)));
-            byte[] body = bufferToString(new BufferedReader(new InputStreamReader(fileInputStream))).getBytes();
+            byte[] body = toBody(in);
             response200Header(dos, body.length);
             responseBody(dos, body);
         } catch (IOException e) {
@@ -36,26 +37,18 @@ public class RequestHandler extends Thread {
         }
     }
 
-    private String filePath(String requestLine) {
-        String _temp = requestLine.split(" ")[1];
-        String _path = _temp.equals("/") ? "/index.html" : _temp;
-        return "webapp"+_path;
+    private byte[] toBody(InputStream in) throws IOException {
+        return Files.readAllBytes(new File(response(in)).toPath());
     }
 
-    private String requestLine(BufferedReader requestBuffer) {
-        return requestBuffer.lines().filter(line -> line.contains("HTTP")).findFirst().orElseThrow(IllegalArgumentException::new);
-    }
-
-    private String bufferToString(BufferedReader requestBuffer) {
-        String _temp = "";
-            List<String> lines = requestBuffer
-                    .lines()
-                    .collect(Collectors.toList());
-
-            for (String line : lines) {
-                _temp += line;
-            }
-        return _temp;
+    private String response(InputStream in) {
+        String requestLine = RequestLineUtil.getLine(in);
+        if (RequestLineUtil.hasQuery(requestLine)) {
+            User user = UserHandler.makeUser(RequestLineUtil.getQuery(requestLine));
+            log.info("user Created" + user);
+            return RequestLineUtil.DEFAULT_URL;
+        }
+        return RequestLineUtil.getFilePath(requestLine);
     }
 
     private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
