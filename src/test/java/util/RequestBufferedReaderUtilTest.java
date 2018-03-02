@@ -1,18 +1,20 @@
 package util;
 
-import model.User;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.*;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 
-public class UserHandlerTest {
+public class RequestBufferedReaderUtilTest {
 
     private static String QUERY = "userId=aa&password=bb&name=cc&email=dd%40dd.dd";
+    private static String HOST = "localhost:8080";
 
     String request;
     BufferedReader in;
@@ -20,7 +22,7 @@ public class UserHandlerTest {
     @Before
     public void setup() {
         request = "POST /user/create HTTP/1.1\n" +
-                "Host: localhost:8080\n" +
+                "Host: "+HOST+"\n" +
                 "Connection: keep-alive\n" +
                 "Content-Length: 46\n" +
                 "Cache-Control: max-age=0\n" +
@@ -39,19 +41,19 @@ public class UserHandlerTest {
     }
 
     @Test
-    public void queryParsing() {
-        Map<String, String> userMap = HttpRequestUtils.parseQueryString(QUERY);
-        User user = new User(userMap.get("userId"), userMap.get("password"), userMap.get("name"), userMap.get("email"));
-        System.out.println(user);
+    public void 컨텐츠_길이_구하기() throws IOException {
+        assertThat(46,is(RequestBufferedReaderUtil.getContentLength(in)));
     }
 
     @Test
-    public void 쿼리_얻기() throws IOException {
-        String requestLine = in.readLine();
-        String host = in.readLine();
-        DataOutputStream out = new DataOutputStream(new FileOutputStream("test"));
+    public void POST_쿼리() throws IOException {
+        RequestBufferedReaderUtil.consumingBeforeQuery(in);
+        assertThat(QUERY,is(in.readLine()));
+    }
 
-        assertThat(QUERY, is(UserHandler.getQuery(requestLine, in, host, out)));
-        out.flush();
+    @Test
+    public void Host_구하기() throws IOException {
+        String host = RequestBufferedReaderUtil.getHost(in);
+        assertThat("http://"+HOST+"/",is(host));
     }
 }

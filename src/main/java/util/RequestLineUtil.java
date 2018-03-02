@@ -1,27 +1,28 @@
 package util;
 
+import java.net.HttpURLConnection;
+
 public class RequestLineUtil {
     
     private static String BASE_FOLDER_NAME = "webapp";
-    private static String DEFAULT_HTML_LOCATOR = "/index.html";
-    public static String DEFAULT_URL = BASE_FOLDER_NAME + DEFAULT_HTML_LOCATOR;
+    public static String DEFAULT_URL = BASE_FOLDER_NAME + "/" + HttpRequestUtils.DEFAULT_HTML_LOCATOR;
     
     public static boolean hasQuery(String requestLine) {
         if (requestLine == null) return false;
-        if (HttpMethod.POST.equals(RequestLineUtil.httpMethod(requestLine))) return true;
+        if (HttpMethod.POST.equals(RequestLineUtil.httpMethodOf(requestLine))) return true;
         return requestLine.contains("?");
     }
 
-    public static String getFilePath(String requestLine) {
-        return filePath(requestLine);
+    public static String getUri(String requestLine) {
+        return uri(requestLine);
     }
 
-    private static String filePath(String requestLine) {
+    private static String uri(String requestLine) {
         if (hasQuery(requestLine)) throw new IllegalArgumentException();
         if (requestLine == null) return DEFAULT_URL;
 
         String uri = getURI(requestLine);
-        String path = uri.equals("/") ? DEFAULT_HTML_LOCATOR : uri;
+        String path = uri.equals("/") ? "/"+HttpRequestUtils.DEFAULT_HTML_LOCATOR : uri;
         return BASE_FOLDER_NAME+path;
     }
 
@@ -31,15 +32,19 @@ public class RequestLineUtil {
         return uri.substring(uri.indexOf("?")+1);
     }
 
+    public static HttpMethod httpMethodOf(String requestLine) {
+        return HttpMethod.valueOf(requestLine.split(" ")[0]);
+    }
+
     private static String getURI(String requestLine) {
         return requestLine.split(" ")[1];
     }
 
-    public static HttpMethod httpMethod(String requestLine) {
-        return HttpMethod.valueOf(requestLine.split(" ")[0]);
+    public static boolean containsURL(String requestLine) {
+        return HttpMethod.GET.equals(httpMethodOf(requestLine)) && !getURI(requestLine).contains("?");
     }
 
-    public static boolean containsURL(String requestLine) {
-        return HttpMethod.GET.equals(httpMethod(requestLine)) && !getURI(requestLine).contains("?");
+    public static String statusCodeOf(String requestLine) {
+        return HttpMethod.GET.equals(httpMethodOf(requestLine)) ? HttpURLConnection.HTTP_OK + " OK" : HttpURLConnection.HTTP_MOVED_TEMP + " Found";
     }
 }

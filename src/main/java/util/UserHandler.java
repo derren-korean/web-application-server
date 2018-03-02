@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
@@ -17,38 +18,24 @@ public class UserHandler {
         return new User(userMap.get("userId"), userMap.get("password"), userMap.get("name"), userMap.get("email"));
     }
 
-    public static String userResponse(String requestLine, BufferedReader requestReader) throws IOException {
+    public static String userResponse(String requestLine, BufferedReader requestReader, DataOutputStream out) throws IOException {
         if (RequestLineUtil.hasQuery(requestLine)) {
-            User user = UserHandler.makeUser(getQuery(requestLine, requestReader));
+            String host = RequestBufferedReaderUtil.getHost(requestReader);
+            User user = UserHandler.makeUser(getQuery(requestLine, requestReader, host, out));
             log.info("user Created" + user);
-            return RequestLineUtil.DEFAULT_URL;
+            return host+HttpRequestUtils.DEFAULT_HTML_LOCATOR;
         }
-        return RequestLineUtil.getFilePath(requestLine);
+        return RequestLineUtil.getUri(requestLine);
     }
 
-    public static String getQuery(String requestLine, BufferedReader requestReader) throws IOException {
-        if (HttpMethod.POST.equals(RequestLineUtil.httpMethod(requestLine))) {
-            int contentLength = getContentLength(requestReader);
-            consumingBeforeQuery(requestReader);
+    public static String getQuery(String requestLine, BufferedReader requestReader, String host, DataOutputStream out) throws IOException {
+        if (HttpMethod.POST.equals(RequestLineUtil.httpMethodOf(requestLine))) {
+            out.writeBytes("Location: "+host+HttpRequestUtils.DEFAULT_HTML_LOCATOR+"\r\n");
+            int contentLength = RequestBufferedReaderUtil.getContentLength(requestReader);
+            RequestBufferedReaderUtil.consumingBeforeQuery(requestReader);
             return IOUtils.readData(requestReader, contentLength);
         }
+        out.writeBytes("\r\n");
         return RequestLineUtil.getQuery(requestLine);
     }
-
-    public static int getContentLength(BufferedReader requestReader) throws IOException {
-        String line = null;
-        while(true){
-            line = requestReader.readLine();
-            if (line.contains("Content-Length")) {
-                break;
-            }
-        }
-        return Integer.valueOf(line.split(" ")[1]);
-    }
-
-    private static void consumingBeforeQuery(BufferedReader requestReader) throws IOException {
-        while(!requestReader.readLine().isEmpty()){
-        }
-    }
-
 }
