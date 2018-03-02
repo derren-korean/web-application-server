@@ -1,19 +1,13 @@
 package webserver;
 
-import java.io.*;
-import java.net.Socket;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.RequestLineUtil;
 import util.UserHandler;
+
+import java.io.*;
+import java.net.Socket;
+import java.nio.file.Files;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -41,14 +35,17 @@ public class RequestHandler extends Thread {
         return Files.readAllBytes(new File(response(in)).toPath());
     }
 
-    private String response(InputStream in) {
-        String requestLine = RequestLineUtil.getLine(in);
-        if (RequestLineUtil.hasQuery(requestLine)) {
-            User user = UserHandler.makeUser(RequestLineUtil.getQuery(requestLine));
-            log.info("user Created" + user);
-            return RequestLineUtil.DEFAULT_URL;
+    private String response(InputStream in) throws IOException {
+        BufferedReader requestReader = new BufferedReader(new InputStreamReader(in));
+        String requestLine = requestReader.readLine();
+        String path = null;
+        if (RequestLineUtil.containsURL(requestLine)) {
+            path = RequestLineUtil.getFilePath(requestLine);
         }
-        return RequestLineUtil.getFilePath(requestLine);
+        if (requestLine.contains("user")) {
+            path = UserHandler.userResponse(requestLine, requestReader);
+        }
+        return path;
     }
 
     private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
