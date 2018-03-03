@@ -29,14 +29,15 @@
 * get이외에도 post방식으로 가능하도록 변경한다.
 * post는 해더 마지막에 바디로써 쿼리가 추가된다.
 * befferedReader가 다 읽히면(EOF) 소켓의 연결이 끊어짐으로 주의한다.
-
+ 
 ### 요구사항 4 - redirect 방식으로 이동
-* header write를 진행 가능하도록 한다.
+* header write가 순차 진행 가능하도록 한다.
 * get과 post의 경우 다르게 작성되어야 한다.
 * 자세한 내용은 3xx status code
 
 ### 요구사항 5 - cookie
-* 
+* 로그인 성공 - redirect to index.html & set Cookie = logined=true
+* 로그인 실패 - redirect to login_faild.html & set Cookie = logine=false
 
 ### 요구사항 6 - stylesheet 적용
 * 

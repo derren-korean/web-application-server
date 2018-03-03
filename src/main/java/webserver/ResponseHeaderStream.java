@@ -2,7 +2,6 @@ package webserver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import util.RequestLineUtil;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -20,8 +19,12 @@ public class ResponseHeaderStream {
         out.writeBytes("Location: "+uri+"\r\n");
     }
 
-    static void setStatusCode(String requestLine, DataOutputStream out) throws IOException {
-        out.writeBytes("HTTP/1.1 "+ RequestLineUtil.statusCodeOf(requestLine)+" \r\n");
+    static void setStatusCode(String statusCode, DataOutputStream out) throws IOException {
+        out.writeBytes("HTTP/1.1 "+statusCode+"\r\n");
+    }
+
+    static void setLoginCookie(boolean loginResult, DataOutputStream out) throws IOException {
+        out.writeBytes("Set-Cookie: logined="+loginResult+"\r\n");
     }
 
     static void responseHeader(DataOutputStream dos, int lengthOfBodyContent) {

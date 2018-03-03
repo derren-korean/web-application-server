@@ -8,6 +8,7 @@ import util.UserHandler;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.util.HashMap;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -37,13 +38,25 @@ public class RequestHandler extends Thread {
     private String response(InputStream in, DataOutputStream out) throws IOException {
         BufferedReader requestReader = new BufferedReader(new InputStreamReader(in));
         String requestLine = requestReader.readLine();
-        ResponseHeaderStream.setStatusCode(requestLine, out);
+        ResponseHeaderStream.setStatusCode(RequestLineUtil.statusCodeOf(requestLine), out);
 
         if (RequestLineUtil.hasUserQuery(requestLine)) {
-            String uri = UserHandler.userResponse(requestLine, requestReader);
+            String uri = userResponse(requestLine, requestReader, out);
             ResponseHeaderStream.setRedirection(uri, out);
             return uri;
         }
         return RequestLineUtil.getUri(requestLine);
+    }
+
+    private String userResponse(String requestLine, BufferedReader requestReader, DataOutputStream out) throws IOException {
+        String uri = null;
+        if (requestLine.contains("create")) {
+            uri = UserHandler.create(requestLine, requestReader);
+        }
+        if (requestLine.contains("login")) {
+            uri = UserHandler.login(requestLine, requestReader);
+            ResponseHeaderStream.setLoginCookie(!uri.contains("login_failed"), out);
+        }
+        return uri;
     }
 }
