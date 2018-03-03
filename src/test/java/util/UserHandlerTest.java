@@ -48,10 +48,9 @@ public class UserHandlerTest {
     @Test
     public void 쿼리_얻기() throws IOException {
         String requestLine = in.readLine();
-        String host = in.readLine();
         DataOutputStream out = new DataOutputStream(new FileOutputStream("test"));
 
-        assertThat(QUERY, is(UserHandler.getQuery(requestLine, in, host, out)));
+        assertThat(QUERY, is(UserHandler.getQuery(requestLine, in)));
         out.flush();
     }
 }

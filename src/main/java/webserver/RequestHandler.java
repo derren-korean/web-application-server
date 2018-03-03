@@ -23,9 +23,8 @@ public class RequestHandler extends Thread {
                 connection.getPort());
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             DataOutputStream dos = new DataOutputStream(out);
-            byte[] body = toBody(in, dos);
-            responseHeader(dos, body.length);
-            responseBody(dos, body);
+            ResponseHeaderStream.response(toBody(in, dos), dos);
+
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -38,34 +37,13 @@ public class RequestHandler extends Thread {
     private String response(InputStream in, DataOutputStream out) throws IOException {
         BufferedReader requestReader = new BufferedReader(new InputStreamReader(in));
         String requestLine = requestReader.readLine();
-        String uri = null;
-        out.writeBytes("HTTP/1.1 "+RequestLineUtil.statusCodeOf(requestLine)+" \r\n");
-        if (RequestLineUtil.containsURL(requestLine)) {
-            uri = RequestLineUtil.getUri(requestLine);
-        }
-        if (requestLine.contains("user")) {
-            uri = UserHandler.userResponse(requestLine, requestReader, out);
-            out.writeBytes( uri + "\r\n");
-        }
-        return uri;
-    }
+        ResponseHeaderStream.setStatusCode(requestLine, out);
 
-    private void responseHeader(DataOutputStream dos, int lengthOfBodyContent) {
-        try {
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
-            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
-            dos.writeBytes("\r\n");
-        } catch (IOException e) {
-            log.error(e.getMessage());
+        if (RequestLineUtil.hasUserQuery(requestLine)) {
+            String uri = UserHandler.userResponse(requestLine, requestReader);
+            ResponseHeaderStream.setRedirection(uri, out);
+            return uri;
         }
-    }
-
-    private void responseBody(DataOutputStream dos, byte[] body) {
-        try {
-            dos.write(body, 0, body.length);
-            dos.flush();
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
+        return RequestLineUtil.getUri(requestLine);
     }
 }

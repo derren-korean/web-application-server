@@ -5,10 +5,9 @@ import java.net.HttpURLConnection;
 public class RequestLineUtil {
     
     private static String BASE_FOLDER_NAME = "webapp";
-    public static String DEFAULT_URL = BASE_FOLDER_NAME + "/" + HttpRequestUtils.DEFAULT_HTML_LOCATOR;
-    
+
     public static boolean hasQuery(String requestLine) {
-        if (requestLine == null) return false;
+        if (requestLine == null) throw new IllegalArgumentException();
         if (HttpMethod.POST.equals(RequestLineUtil.httpMethodOf(requestLine))) return true;
         return requestLine.contains("?");
     }
@@ -19,7 +18,6 @@ public class RequestLineUtil {
 
     private static String uri(String requestLine) {
         if (hasQuery(requestLine)) throw new IllegalArgumentException();
-        if (requestLine == null) return DEFAULT_URL;
 
         String uri = getURI(requestLine);
         String path = uri.equals("/") ? "/"+HttpRequestUtils.DEFAULT_HTML_LOCATOR : uri;
@@ -45,6 +43,10 @@ public class RequestLineUtil {
     }
 
     public static String statusCodeOf(String requestLine) {
-        return HttpMethod.GET.equals(httpMethodOf(requestLine)) ? HttpURLConnection.HTTP_OK + " OK" : HttpURLConnection.HTTP_MOVED_TEMP + " Found";
+        return containsURL(requestLine) ? HttpURLConnection.HTTP_OK + " OK" : HttpURLConnection.HTTP_MOVED_TEMP + " Found";
+    }
+
+    public static boolean hasUserQuery(String requestLine) {
+        return requestLine.contains("user") && hasQuery(requestLine);
     }
 }
