@@ -8,7 +8,6 @@ import util.UserHandler;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.util.HashMap;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -38,8 +37,16 @@ public class RequestHandler extends Thread {
     private String response(InputStream in, DataOutputStream out) throws IOException {
         BufferedReader requestReader = new BufferedReader(new InputStreamReader(in));
         String requestLine = requestReader.readLine();
-        ResponseHeaderStream.setStatusCode(RequestLineUtil.statusCodeOf(requestLine), out);
 
+        if (requestLine.contains("/user/list")) {
+            String uri = UserHandler.redirectByLoginCookie(requestLine, requestReader);
+            if (uri.contains("login")) {
+                ResponseHeaderStream.setRedirection(uri, out);
+            }
+            return uri;
+        }
+
+        ResponseHeaderStream.setStatusCode(RequestLineUtil.statusCodeOf(requestLine), out);
         if (RequestLineUtil.hasUserQuery(requestLine)) {
             String uri = userResponse(requestLine, requestReader, out);
             ResponseHeaderStream.setRedirection(uri, out);

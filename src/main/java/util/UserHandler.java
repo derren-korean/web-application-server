@@ -47,4 +47,9 @@ public class UserHandler {
         }
         return RequestLineUtil.getQuery(requestLine);
     }
+
+    public static String redirectByLoginCookie(String requestLine ,BufferedReader requestReader) throws IOException {
+        String host = RequestBufferedReaderUtil.getHost(requestReader);
+        return RequestBufferedReaderUtil.isLogined(requestReader) ? RequestLineUtil.getUri(requestLine) : host + "user/login.html";
+    }
 }

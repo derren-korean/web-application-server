@@ -23,4 +23,8 @@ class RequestBufferedReaderUtil {
         }
         return line;
     }
+
+    public static boolean isLogined(BufferedReader requestReader) throws IOException {
+        return Boolean.valueOf(getLine(requestReader, "Cookie").split("=")[1]);
+    }
 }

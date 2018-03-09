@@ -37,9 +37,13 @@
 
 ### 요구사항 5 - cookie
 * 로그인 성공 - redirect to index.html & set Cookie = logined=true
-* 로그인 실패 - redirect to login_faild.html & set Cookie = logine=false
+* 로그인 실패 - redirect to login_failed.html & set Cookie = logine=false
 
-### 요구사항 6 - stylesheet 적용
+### 요구사항 6 - 사용자 리스트
+* 로그인 쿠키에 사용자 로그인이 되었다면, 보내준다.
+* 로그인이 안되어 있는 경우, login 페이지로 넘긴다. 
+
+### 요구사항 7 - stylesheet 적용
 * 
 
 ### heroku 서버에 배포 후

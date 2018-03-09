@@ -80,7 +80,7 @@ public class UserHandlerTest {
                 "\n" +
                 query;
         in = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(request.getBytes())));
-        
+
         String requestLine = in.readLine();
         String url = "http://localhost:8080/" + "user/login_failed.html";
         assertThat(url, is(UserHandler.login(requestLine, in)));
