@@ -9,4 +9,8 @@ public enum HttpMethod {
     HttpMethod(String value) {
         this.value = value;
     }
+
+    public boolean equals(String value) {
+        return this.equals(valueOf(value));
+    }
 }

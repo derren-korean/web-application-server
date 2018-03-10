@@ -4,24 +4,29 @@ import db.DataBase;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import webserver.RequestMap;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Map;
 
 public class UserHandler {
 
     private static final Logger log = LoggerFactory.getLogger(UserHandler.class);
 
-    public static String create(String requestLine, BufferedReader requestReader) throws IOException {
-        return RequestBufferedReaderUtil.getHost(requestReader)+UserHandler.makeUser(getQuery(requestLine, requestReader));
+    public static String create(RequestMap requestMap) {
+        return host(requestMap)+UserHandler.makeUser(requestMap.get("Query"));
     }
 
-    public static String login(String requestLine, BufferedReader requestReader) throws IOException {
-        return RequestBufferedReaderUtil.getHost(requestReader)+login(getQuery(requestLine, requestReader));
+    private static String host(RequestMap requestMap) {
+        return "http://"+requestMap.get("Host")+"/";
+    }
+
+    public static String login(RequestMap requestMap) {
+        return host(requestMap)+login(requestMap.get("Query"));
     }
 
     private static String makeUser(String query) {
+        if (query == null || query.isEmpty()) throw new IllegalArgumentException();
         Map<String, String> userMap = HttpRequestUtils.parseQueryString(query);
         User user = new User(userMap.get("userId"), userMap.get("password"), userMap.get("name"), userMap.get("email"));
         DataBase.addUser(user);
@@ -38,18 +43,11 @@ public class UserHandler {
         return HttpRequestUtils.DEFAULT_HTML_LOCATOR;
     }
 
-    public static String getQuery(String requestLine, BufferedReader requestReader) throws IOException {
-        if (HttpMethod.POST.equals(RequestLineUtil.httpMethodOf(requestLine))) {
-            int contentLength = RequestBufferedReaderUtil.getContentLength(requestReader);
-            RequestBufferedReaderUtil.consumingBeforeQuery(requestReader);
-
-            return IOUtils.readData(requestReader, contentLength);
-        }
-        return RequestLineUtil.getQuery(requestLine);
+    public static String redirectByLoginCookie(RequestMap requestMap) {
+        return requestMap.isLogined() ? RequestLineUtil.responseOK(requestMap) : "http://"+requestMap.get("Host") + "/user/login.html";
     }
 
-    public static String redirectByLoginCookie(String requestLine ,BufferedReader requestReader) throws IOException {
-        String host = RequestBufferedReaderUtil.getHost(requestReader);
-        return RequestBufferedReaderUtil.isLogined(requestReader) ? RequestLineUtil.getUri(requestLine) : host + "user/login.html";
+    public static String StatusCodeOf(RequestMap requestMap) {
+        return requestMap.isLogined() ? HttpURLConnection.HTTP_OK + " OK" : HttpURLConnection.HTTP_MOVED_TEMP + " Found";
     }
 }

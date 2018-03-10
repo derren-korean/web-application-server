@@ -31,39 +31,44 @@ public class RequestHandler extends Thread {
     }
 
     private byte[] toBody(InputStream in, DataOutputStream out) throws IOException {
-        return Files.readAllBytes(new File(response(in, out)).toPath());
+        return Files.readAllBytes(new File(response(new RequestMap(in), out)).toPath());
     }
 
-    private String response(InputStream in, DataOutputStream out) throws IOException {
-        BufferedReader requestReader = new BufferedReader(new InputStreamReader(in));
-        String requestLine = requestReader.readLine();
-
-        if (requestLine.contains("/user/list")) {
-            String uri = UserHandler.redirectByLoginCookie(requestLine, requestReader);
-            if (uri.contains("login")) {
-                ResponseHeaderStream.setRedirection(uri, out);
-            }
-            return uri;
+    private String response(RequestMap in, DataOutputStream out) throws IOException {
+        if (RequestLineUtil.contains(in,"/user/list")) {
+            return userListResponse(in, out);
         }
 
-        ResponseHeaderStream.setStatusCode(RequestLineUtil.statusCodeOf(requestLine), out);
-        if (RequestLineUtil.hasUserQuery(requestLine)) {
-            String uri = userResponse(requestLine, requestReader, out);
+        ResponseHeaderStream.setStatusCode(RequestLineUtil.StatusCodeOf(in), out);
+        if (RequestLineUtil.hasUserQuery(in)) {
+            return userQueryResponse(in, out);
+        }
+
+        return RequestLineUtil.responseOK(in);
+    }
+
+    private String userListResponse(RequestMap in, DataOutputStream out) throws IOException {
+        ResponseHeaderStream.setStatusCode(UserHandler.StatusCodeOf(in),out);
+        String uri = UserHandler.redirectByLoginCookie(in);
+
+        if (uri.contains("login")) {
             ResponseHeaderStream.setRedirection(uri, out);
-            return uri;
-        }
-        return RequestLineUtil.getUri(requestLine);
-    }
-
-    private String userResponse(String requestLine, BufferedReader requestReader, DataOutputStream out) throws IOException {
-        String uri = null;
-        if (requestLine.contains("create")) {
-            uri = UserHandler.create(requestLine, requestReader);
-        }
-        if (requestLine.contains("login")) {
-            uri = UserHandler.login(requestLine, requestReader);
-            ResponseHeaderStream.setLoginCookie(!uri.contains("login_failed"), out);
         }
         return uri;
     }
+
+    private String userQueryResponse(RequestMap requestMap, DataOutputStream out) throws IOException {
+        String uri = null;
+        if (RequestLineUtil.contains(requestMap,"create")) {
+            uri = UserHandler.create(requestMap);
+        }
+        if (RequestLineUtil.contains(requestMap, "login")) {
+            uri = UserHandler.login(requestMap);
+            ResponseHeaderStream.setLoginCookie(!uri.contains("login_failed"), out);
+        }
+        ResponseHeaderStream.setRedirection(uri, out);
+        return uri;
+    }
+
+
 }

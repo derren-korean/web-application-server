@@ -1,42 +1,33 @@
 package util;
 
-import db.DataBase;
 import model.User;
 import org.junit.Before;
 import org.junit.Test;
+import webserver.RequestMap;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Map;
 
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class UserHandlerTest {
 
     private static String QUERY = "userId=aa&password=bb&name=cc&email=dd%40dd.dd";
 
     String request;
-    BufferedReader in;
+    InputStream in;
+    RequestMap requestMap;
 
     @Before
     public void setup() {
         request = "POST /user/create HTTP/1.1\n" +
                 "Host: localhost:8080\n" +
-                "Connection: keep-alive\n" +
                 "Content-Length: 46\n" +
-                "Cache-Control: max-age=0\n" +
-                "Origin: http://localhost:8080\n" +
-                "Upgrade-Insecure-Requests: 1\n" +
-                "Content-Type: application/x-www-form-urlencoded\n" +
-                "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36\n" +
-                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8\n" +
-                "Referer: http://localhost:8080/user/form.html\n" +
-                "Accept-Encoding: gzip, deflate, br\n" +
-                "Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7\n" +
                 "\n" +
                 QUERY;
-
-        in = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(request.getBytes())));
+        requestMap = initRequestMap(request);
     }
 
     @Test
@@ -46,71 +37,62 @@ public class UserHandlerTest {
     }
 
     @Test
-    public void 쿼리_얻기() throws IOException {
-        String requestLine = in.readLine();
-        DataOutputStream out = new DataOutputStream(new FileOutputStream("test"));
-
-        assertThat(QUERY, is(UserHandler.getQuery(requestLine, in)));
-        out.flush();
-    }
-
-    @Test
-    public void 사용자_생성() throws IOException {
-        String requestLine = in.readLine();
+    public void 사용자_생성() {
+        requestMap = initRequestMap(request);
         String url = "http://localhost:8080/" + HttpRequestUtils.DEFAULT_HTML_LOCATOR;
-        assertThat(url, is(UserHandler.create(requestLine, in)));
+        assertThat(url, is(UserHandler.create(requestMap)));
     }
 
     @Test
-    public void 로그인_실패() throws IOException {
-        String query = "userId=aa&password=cc";
-        request = "POST /user/login HTTP/1.1\n" +
-                "Host: localhost:8080\n" +
-                "Connection: keep-alive\n" +
-                "Content-Length: 46\n" +
-                "Cache-Control: max-age=0\n" +
-                "Origin: http://localhost:8080\n" +
-                "Upgrade-Insecure-Requests: 1\n" +
-                "Content-Type: application/x-www-form-urlencoded\n" +
-                "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36\n" +
-                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8\n" +
-                "Referer: http://localhost:8080/user/form.html\n" +
-                "Accept-Encoding: gzip, deflate, br\n" +
-                "Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7\n" +
-                "\n" +
-                query;
-        in = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(request.getBytes())));
-
-        String requestLine = in.readLine();
+    public void 로그인_실패() {
+        requestMap = initRequestMap(loginRequest("userId=aa&password=cc"));
         String url = "http://localhost:8080/" + "user/login_failed.html";
-        assertThat(url, is(UserHandler.login(requestLine, in)));
+        assertThat(url, is(UserHandler.login(requestMap)));
     }
 
     @Test
-    public void 로그인_성공() throws IOException {
-        String requestLine = in.readLine();
+    public void 로그인_성공__생성후_로그인() {
         String url = "http://localhost:8080/" + HttpRequestUtils.DEFAULT_HTML_LOCATOR;
-        assertThat(url, is(UserHandler.create(requestLine, in)));
+        assertThat(url, is(UserHandler.create(requestMap)));
 
-        String query = "userId=aa&password=bb";
-        request = "POST /user/login HTTP/1.1\n" +
+        requestMap = initRequestMap(loginRequest("userId=aa&password=bb"));
+        assertThat(url, is(UserHandler.login(requestMap)));
+    }
+
+    private String loginRequest(String query) {
+        return "POST /user/login HTTP/1.1\n" +
                 "Host: localhost:8080\n" +
-                "Connection: keep-alive\n" +
                 "Content-Length: 46\n" +
-                "Cache-Control: max-age=0\n" +
-                "Origin: http://localhost:8080\n" +
-                "Upgrade-Insecure-Requests: 1\n" +
-                "Content-Type: application/x-www-form-urlencoded\n" +
-                "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36\n" +
-                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8\n" +
-                "Referer: http://localhost:8080/user/form.html\n" +
-                "Accept-Encoding: gzip, deflate, br\n" +
-                "Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7\n" +
                 "\n" +
                 query;
-        in = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(request.getBytes())));
+    }
 
-        requestLine = in.readLine();
-        assertThat(url, is(UserHandler.login(requestLine, in)));
+    @Test
+    public void 쿠키확인_리다이렉션() {
+        requestMap = initRequestMap(listRequest(""));
+        assertThat("http://localhost:8080/user/login.html", is(UserHandler.redirectByLoginCookie(requestMap)));
+
+        requestMap = initRequestMap(listRequest("Cookie: logined=true\n"));
+        assertThat("webapp/user/list.html", is(UserHandler.redirectByLoginCookie(requestMap)));
+    }
+
+    private String listRequest(String cookieLine) {
+        return "GET /user/list.html HTTP/1.1\n" +
+                "Host: localhost:8080\n" +
+                "Content-Length: 46\n" +
+                cookieLine +
+                "\n";
+    }
+
+    @Test
+    public void 상태코드() {
+        assertThat("302 Found", is(UserHandler.StatusCodeOf(requestMap)));
+
+        requestMap = initRequestMap(listRequest("Cookie: logined=true\n"));
+        assertThat("200 OK", is(UserHandler.StatusCodeOf(requestMap)));
+    }
+
+    private RequestMap initRequestMap(String request) {
+        return new RequestMap(new ByteArrayInputStream(request.getBytes()));
     }
 }
