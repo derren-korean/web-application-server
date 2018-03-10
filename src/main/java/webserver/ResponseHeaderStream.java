@@ -15,15 +15,15 @@ public class ResponseHeaderStream {
         responseBody(dos, body);
     }
 
-    static void setRedirection(String uri, DataOutputStream out) throws IOException {
+    public static void setRedirection(String uri, DataOutputStream out) throws IOException {
         out.writeBytes("Location: "+uri+"\r\n");
     }
 
-    static void setStatusCode(String statusCode, DataOutputStream out) throws IOException {
+    public static void setStatusCode(String statusCode, DataOutputStream out) throws IOException {
         out.writeBytes("HTTP/1.1 "+statusCode+"\r\n");
     }
 
-    static void setLoginCookie(boolean loginResult, DataOutputStream out) throws IOException {
+    public static void setLoginCookie(boolean loginResult, DataOutputStream out) throws IOException {
         out.writeBytes("Set-Cookie: logined="+loginResult+"\r\n");
     }
 

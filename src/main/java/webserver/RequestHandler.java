@@ -1,5 +1,6 @@
 package webserver;
 
+import controller.UserController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.RequestLineUtil;
@@ -35,40 +36,11 @@ public class RequestHandler extends Thread {
     }
 
     private String response(RequestMap in, DataOutputStream out) throws IOException {
-        if (RequestLineUtil.contains(in,"/user/list")) {
-            return userListResponse(in, out);
+        if (RequestLineUtil.contains(in,"/user")) {
+            return UserController.userResponse(in, out);
         }
 
-        ResponseHeaderStream.setStatusCode(RequestLineUtil.StatusCodeOf(in), out);
-        if (RequestLineUtil.hasUserQuery(in)) {
-            return userQueryResponse(in, out);
-        }
-
+        ResponseHeaderStream.setStatusCode(UserHandler.StatusCodeOf(in),out);
         return RequestLineUtil.responseOK(in);
     }
-
-    private String userListResponse(RequestMap in, DataOutputStream out) throws IOException {
-        ResponseHeaderStream.setStatusCode(UserHandler.StatusCodeOf(in),out);
-        String uri = UserHandler.redirectByLoginCookie(in);
-
-        if (uri.contains("login")) {
-            ResponseHeaderStream.setRedirection(uri, out);
-        }
-        return uri;
-    }
-
-    private String userQueryResponse(RequestMap requestMap, DataOutputStream out) throws IOException {
-        String uri = null;
-        if (RequestLineUtil.contains(requestMap,"create")) {
-            uri = UserHandler.create(requestMap);
-        }
-        if (RequestLineUtil.contains(requestMap, "login")) {
-            uri = UserHandler.login(requestMap);
-            ResponseHeaderStream.setLoginCookie(!uri.contains("login_failed"), out);
-        }
-        ResponseHeaderStream.setRedirection(uri, out);
-        return uri;
-    }
-
-
 }

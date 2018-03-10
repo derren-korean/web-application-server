@@ -26,7 +26,7 @@ public class RequestMap {
             putQuery(bufferedReader);
         } catch (IOException e) {
             e.printStackTrace();
-        }
+    }
     }
 
     private void putRequestLine(BufferedReader bufferedReader) throws IOException{
