@@ -4,6 +4,7 @@ import controller.UserController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.RequestLineUtil;
+import util.ResponseHeaderSession;
 import util.UserHandler;
 
 import java.io.*;
@@ -24,8 +25,8 @@ public class RequestHandler extends Thread {
                 connection.getPort());
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             DataOutputStream dos = new DataOutputStream(out);
+            ResponseHeaderSession.init();
             ResponseHeaderStream.response(toBody(in, dos), dos);
-
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -36,6 +37,9 @@ public class RequestHandler extends Thread {
     }
 
     private String response(RequestMap in, DataOutputStream out) throws IOException {
+        if (in.get("Accept").contains("css")) {
+            ResponseHeaderSession.setContentType("text/css");
+        }
         if (RequestLineUtil.contains(in,"/user")) {
             return UserController.userResponse(in, out);
         }

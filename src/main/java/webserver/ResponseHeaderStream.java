@@ -2,6 +2,7 @@ package webserver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import util.ResponseHeaderSession;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -26,10 +27,10 @@ public class ResponseHeaderStream {
     public static void setLoginCookie(boolean loginResult, DataOutputStream out) throws IOException {
         out.writeBytes("Set-Cookie: logined="+loginResult+"\r\n");
     }
-
+//text/html
     static void responseHeader(DataOutputStream dos, int lengthOfBodyContent) {
         try {
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Content-Type: "+ ResponseHeaderSession.getContentType()+";charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
